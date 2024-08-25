@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search> 
+  
+  
+    
+    <entry>
+      <title>栈溢出之retlibc</title>
+      <link href="/2024/08/25/%E6%A0%88%E6%BA%A2%E5%87%BA%E4%B9%8Bretlibc/"/>
+      <url>/2024/08/25/%E6%A0%88%E6%BA%A2%E5%87%BA%E4%B9%8Bretlibc/</url>
+      
+        <content type="html"><![CDATA[<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p><code>ret2libc</code> 控制函数执行 <code>libc</code> 中的函数，通常是返回某个函数的 <code>plt</code> 处或者函数的具体位置（即函数对应的 <code>got</code> 表项的内容）  </p><p>一般情况下，会执行 <code>system(&quot;/bin/sh&quot;)</code> 语句，但也可以使用 <code>execve</code> 函数或 <code>/sh</code> 参数</p><h2 id="条件"><a href="#条件" class="headerlink" title="条件"></a>条件</h2><ul><li>存在溢出，且溢出的范围足够大，可以覆盖到 <code>main</code> 函数的返回地址</li><li>存在如 <code>puts</code> , <code>write</code> 等的打印函数可以被利用。在劫持程序的执行流程后，执行 <code>puts</code> , <code>write</code> 等函数打印一些已经执行过的函数的真实地址，以便寻找 <code>libc</code> 的基地址</li></ul><h2 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h2><ul><li>开启了 NX 保护，同时栈不可执行，不能使用 <code>ret2shellcode</code></li><li>程序本身没有如 <code>system(&#39;/bin/sh&#39;)</code> 的后门函数，不能直接使用 <code>ret2text</code></li><li>程序中既没 <code>system</code> 函数，也没 <code>/bin/sh</code> 字符串，需要在 <code>libc</code> 库中寻找</li></ul><p>由于这种题目需要判断 <code>libc</code> 的版本，需要使用到 <code>LibcSearcher</code> 这个库</p><h2 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h2><ol><li>寻找一个函数的真实地址，以 <code>puts</code> 为例，构建合理的 <code>payload1</code> ，劫持程序的执行流程，使得程序执行 <code>puts</code> 打印得到 <code>puts</code> 函数的真实地址，并返回到 <code>main</code> 函数重新开始</li><li>根据泄露出的 <code>puts</code> 函数的真实地址的后三位，判断出 <code>libc</code> 库的版本（ <code>LibcSearcher</code> 或网站）</li><li>根据 <code>libc</code> 库的版本确定 <code>puts</code> 函数的偏移地址</li><li>计算$基地址 &#x3D; puts 函数的真实地址 - puts 函数的偏移地址$</li><li>根据 <code>libc</code> 库的版本计算出 <code>system</code> 函数和 <code>&#39;/bin/sh&#39;</code> 字符串在 <code>libc</code> 库中的偏移地址</li><li>根据 $真实地址 &#x3D; 基地址 + 偏移地址$ ，计算出 <code>system</code> 函数和 <code>&#39;/bin/sh&#39;</code> 字符串的真实地址</li><li>构造合理的 <code>payload2</code> ，劫持程序的执行流程，执行 <code>system(&#39;/bin/sh&#39;)</code> 从而拿到 <code>shell</code></li></ol><h2 id="例题"><a href="#例题" class="headerlink" title="例题"></a>例题</h2><ul><li>[[pwn47 32位 ret2libc]]</li></ul>]]></content>
+      
+      
+      <categories>
+          
+          <category> 栈溢出 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 栈溢出 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Hello World</title>
+      <link href="/2024/08/24/hello-world/"/>
+      <url>/2024/08/24/hello-world/</url>
+      
+        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+  
+  
+</search>
